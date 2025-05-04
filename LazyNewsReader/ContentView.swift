@@ -7,18 +7,42 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+import SwiftUI
 
-#Preview {
-    ContentView()
+struct ContentView: View {
+    @StateObject private var viewModel = NewsViewModel()
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                List(viewModel.articles) { article in
+                    NewsRow(article: article)
+                        .onAppear {
+                            viewModel.loadMoreArticlesIfNeeded(currentArticle: article)
+                        }
+                }
+                .listStyle(.plain)
+                .navigationTitle("Lazy News")
+
+                if viewModel.isLoading && !viewModel.articles.isEmpty {
+                    ProgressView("Loading more...")
+                        .padding()
+                }
+            }
+            .overlay(
+                Group {
+                    if viewModel.isLoading && viewModel.articles.isEmpty {
+                        ProgressView("Loading News...")
+                            .scaleEffect(1.3)
+                            .padding()
+                            .background(Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(12)
+                    }
+                }
+            )
+            .onAppear {
+                viewModel.loadMoreArticlesIfNeeded(currentArticle: nil)
+            }
+        }
+    }
 }
